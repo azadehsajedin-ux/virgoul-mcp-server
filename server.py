@@ -9,7 +9,7 @@ import os
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("virgoul-music-platform")
+mcp = FastMCP("virgoul-music-platform", stateless_http=True)
 
 # ---------------------------------------------------------------------------
 # Knowledge base
@@ -239,6 +239,6 @@ class WellKnownMiddleware:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    sse_app = mcp.sse_app()
-    app = WellKnownMiddleware(sse_app)
+    http_app = mcp.streamable_http_app()
+    app = WellKnownMiddleware(http_app)
     uvicorn.run(app, host="0.0.0.0", port=port)
