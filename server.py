@@ -9,7 +9,7 @@ import os
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("virgoul-music-platform", stateless_http=True)
+mcp = FastMCP("virgoul-music-platform", stateless_http=True, streamable_http_path="/")
 
 # ---------------------------------------------------------------------------
 # Knowledge base
