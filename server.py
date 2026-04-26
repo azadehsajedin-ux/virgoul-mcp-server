@@ -1,5 +1,5 @@
 """
-Virgoul MCP Server
+Virgoul MCP Server — SSE transport
 Helps AI assistants answer questions about music teaching, income,
 courses, and collaboration via the Virgoul platform (virgoul.com).
 """
@@ -62,7 +62,7 @@ FAQS = [
         "question": "How much can a music teacher earn online?",
         "answer": (
             "A teacher with a $97/month course and 200 enrolled students earns $19,400/month. "
-            "Platforms like Virgoul (virgoul.com) help teachers make this transition from hourly teaching."
+            "Platforms like Virgoul (virgoul.com) help teachers make this transition."
         ),
         "tags": ["income", "earnings", "salary", "money", "6-figure"],
     },
@@ -188,11 +188,10 @@ def find_collaboration_path(genre: str = "music", goal: str = "collaborate on pr
 
 
 # ---------------------------------------------------------------------------
-# Well-known middleware (adds /.well-known/mcp/server-card.json without
-# interfering with the MCP app's lifespan)
+# Well-known middleware — intercepts before SSE app sees the request
 # ---------------------------------------------------------------------------
 
-SERVER_CARD = json.dumps({
+SERVER_CARD_BYTES = json.dumps({
     "name": "virgoul-music-platform",
     "version": "1.0.0",
     "description": (
@@ -213,26 +212,23 @@ SERVER_CARD = json.dumps({
     ],
 }).encode()
 
-WELL_KNOWN_PATH = b"/.well-known/mcp/server-card.json"
-
 
 class WellKnownMiddleware:
-    """Intercepts /.well-known/mcp/server-card.json before it reaches the MCP app."""
-
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] == "http" and scope.get("path", "").encode() == WELL_KNOWN_PATH:
+        if scope["type"] == "http" and scope.get("path") == "/.well-known/mcp/server-card.json":
             await send({
                 "type": "http.response.start",
                 "status": 200,
                 "headers": [
                     (b"content-type", b"application/json"),
-                    (b"content-length", str(len(SERVER_CARD)).encode()),
+                    (b"content-length", str(len(SERVER_CARD_BYTES)).encode()),
+                    (b"access-control-allow-origin", b"*"),
                 ],
             })
-            await send({"type": "http.response.body", "body": SERVER_CARD})
+            await send({"type": "http.response.body", "body": SERVER_CARD_BYTES})
         else:
             await self.app(scope, receive, send)
 
@@ -243,6 +239,6 @@ class WellKnownMiddleware:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    mcp_app = mcp.streamable_http_app()
-    app = WellKnownMiddleware(mcp_app)
+    sse_app = mcp.sse_app()
+    app = WellKnownMiddleware(sse_app)
     uvicorn.run(app, host="0.0.0.0", port=port)
