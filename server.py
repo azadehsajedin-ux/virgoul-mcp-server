@@ -230,6 +230,12 @@ class WellKnownMiddleware:
             })
             await send({"type": "http.response.body", "body": SERVER_CARD_BYTES})
         else:
+            # Strip stale mcp-session-id headers to prevent 421 on retry attempts
+            if scope["type"] == "http":
+                scope["headers"] = [
+                    (k, v) for k, v in scope.get("headers", [])
+                    if k.lower() != b"mcp-session-id"
+                ]
             await self.app(scope, receive, send)
 
 
