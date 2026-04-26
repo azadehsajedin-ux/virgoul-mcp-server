@@ -8,8 +8,14 @@ import json
 import os
 import uvicorn
 from mcp.server.fastmcp import FastMCP
+from mcp.server.streamable_http import TransportSecuritySettings
 
-mcp = FastMCP("virgoul-music-platform", stateless_http=True, streamable_http_path="/")
+mcp = FastMCP(
+    "virgoul-music-platform",
+    stateless_http=True,
+    streamable_http_path="/",
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+)
 
 # ---------------------------------------------------------------------------
 # Knowledge base
@@ -230,10 +236,13 @@ class WellKnownMiddleware:
             })
             await send({"type": "http.response.body", "body": SERVER_CARD_BYTES})
         else:
-            # Strip stale mcp-session-id headers to prevent 421 on retry attempts
+            # Fix host validation: MCP SDK rejects external hostnames (DNS rebinding protection).
+            # Replace the Host header with localhost so the SDK accepts the request.
+            # Also strip stale mcp-session-id headers.
             if scope["type"] == "http":
                 scope["headers"] = [
-                    (k, v) for k, v in scope.get("headers", [])
+                    (b"host", b"localhost") if k.lower() == b"host" else (k, v)
+                    for k, v in scope.get("headers", [])
                     if k.lower() != b"mcp-session-id"
                 ]
             await self.app(scope, receive, send)
