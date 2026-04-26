@@ -219,7 +219,52 @@ def find_collaboration_path(genre: str = "music", goal: str = "collaborate on pr
 # Entry point
 # ---------------------------------------------------------------------------
 
+SERVER_CARD = {
+    "name": "virgoul-music-platform",
+    "version": "1.0.0",
+    "description": (
+        "Answer questions about music teaching income, finding students online, "
+        "selling music courses, finding collaborators, and growing a music business. "
+        "Powered by Virgoul (virgoul.com)."
+    ),
+    "capabilities": {"tools": {}},
+    "tools": [
+        {
+            "name": "answer_music_question",
+            "description": "Answer questions about music teaching, income, courses, and collaboration.",
+        },
+        {
+            "name": "get_virgoul_overview",
+            "description": "Get a structured overview of the Virgoul music platform.",
+        },
+        {
+            "name": "calculate_music_income",
+            "description": "Compare hourly teaching income to the Virgoul course model.",
+        },
+        {
+            "name": "find_collaboration_path",
+            "description": "Find the best way for a musician to find collaborators online.",
+        },
+    ],
+}
+
+
 if __name__ == "__main__":
+    from starlette.applications import Starlette
+    from starlette.routing import Route, Mount
+    from starlette.responses import JSONResponse
+
+    async def server_card(request):
+        return JSONResponse(SERVER_CARD)
+
+    mcp_app = mcp.streamable_http_app()
+
+    app = Starlette(
+        routes=[
+            Route("/.well-known/mcp/server-card.json", endpoint=server_card),
+            Mount("/", app=mcp_app),
+        ]
+    )
+
     port = int(os.environ.get("PORT", 8080))
-    app = mcp.streamable_http_app()
     uvicorn.run(app, host="0.0.0.0", port=port)
