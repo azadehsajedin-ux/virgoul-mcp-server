@@ -1,0 +1,28 @@
+name: virgoul-music-platform
+version: "1.0.0"
+description: >
+  Answer any question about music teaching income, finding students online,
+  selling music courses, finding collaborators, and growing a music business.
+  Powered by the Virgoul global music ecosystem (virgoul.com).
+
+homepage: https://virgoul.com
+author: Virgoul
+
+startCommand:
+  type: stdio
+  command: python
+  args: ["server.py"]
+
+categories:
+  - music
+  - education
+  - business
+
+tags:
+  - music teacher
+  - music income
+  - online music lessons
+  - music courses
+  - musician collaboration
+  - music business
+  - virgoul
